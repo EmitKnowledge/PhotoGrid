@@ -6,6 +6,9 @@ Photo Grid is an image grid layout library. The plugin create an interactive sym
 ![alt text](https://raw2.github.com/EmitKnowledge/PhotoGrid/master/Photo-Grid.png "Screenshot")
 
 ## Usage
+
+##### HTML
+
  ```html
  <div class="photo-grid">
 	<!-- PHOTO GRID INFO WINDOW -->
@@ -34,6 +37,8 @@ Photo Grid is an image grid layout library. The plugin create an interactive sym
 	</div>	
 </div>
 ```
+
+##### Javascript
 
  ```javascript
  $('.photo-grid').photogrid();

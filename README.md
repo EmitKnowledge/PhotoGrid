@@ -3,6 +3,8 @@ PhotoGrid
 
 Photo Grid is an image grid layout library. The plugin create an interactive symmetric photo grid from dynamic sized images.
 
+![alt text](https://raw2.github.com/EmitKnowledge/PhotoGrid/master/Photo-Grid.png "Screenshot")
+
 ## Usage
  ```html
  <div class="photo-grid">

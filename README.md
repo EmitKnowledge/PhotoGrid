@@ -33,7 +33,8 @@ Photo Grid is an image grid layout library. The plugin create an interactive sym
 		<img src="http://lorempixel.com/500/150/">
 	</div>	
 </div>
-
+```
 
  ```javascript
  $('.photo-grid').photogrid();
+ ```

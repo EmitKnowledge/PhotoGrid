@@ -12,7 +12,7 @@ function random(from, to){
 * @desc generate random samples for the demo
 */		
 function createRandomSamples(){
-	for(var i = 0; i < 25; i++){
+	for(var i = 0; i < 21; i++){
 		// create the image element
 		var $imageBox = $("<div class='photo-grid-image-box' data-title='Some title " + i + "' data-description='Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit'/>");
 		// assign some random width/height

@@ -33,41 +33,71 @@
 		* @desc adjust the photogrid matrix
 		*/			
 		_this.adjustLayout = function(){
+            var $photoBoxes = $('.photo-grid-image-box');
 			var containerWidth = $(_this.domElement).width();
 			var rowWidth = 0;
 			var rowNumber = 0;
+            var i = 0;
+            var isProcessing = true;
 			var previousElements = [];
-			$('.photo-grid-image-box').each(function(){
-				_this.assignRandomHover(this);
-				// assign row number
-				$(this).attr(key.rowNumber, rowNumber);
-				// calculate how much space we have for row
-				var width = $(this).outerWidth(true);					
-				rowWidth += width;
-				var diff = containerWidth - rowWidth;
-				previousElements.push(this);
-				// when 80% is filled distribute the left over width to the buffer elements
-				if(rowWidth > containerWidth*80/100){
-					_this.adjustRow(previousElements, diff);
-					previousElements = [];
-					rowWidth = 0;
-					rowNumber++;
-				}
-			});
-		}			
-		
+            while(isProcessing){
+                var $el = $photoBoxes[i];
+                _this.assignRandomHover($el);
+                // calculate how much space we have for row
+                rowWidth = _this.calculateCurrentRowWidth(previousElements);
+                var diff = _this.calculateLeftoutWidth(previousElements, containerWidth);
+                // when 80% is filled distribute the left over width to the buffer elements
+                var nextElementWidth = $el && $($el).next().width() || diff + 1;
+                if(rowWidth > containerWidth*80/100 || nextElementWidth > diff){
+                    _this.adjustRow(previousElements, diff);
+                    previousElements = [];
+                    rowWidth = 0;
+                    rowNumber++;
+                }
+                if($el){
+                    previousElements.push($el);
+                    // assign row number
+                    $($el).attr(key.rowNumber, rowNumber);
+                }
+                if(previousElements.length == 0) isProcessing = false;
+                i++
+            }
+		}
+
+        _this.calculateCurrentRowWidth = function(elements){
+            var widthSum = 0;
+            for(var i = 0; i < elements.length; i++){
+                widthSum += $(elements[i]).outerWidth(true);
+            }
+            return widthSum;
+        };
+
+        _this.calculateLeftoutWidth = function(elements, containerWidth){
+            return containerWidth - _this.calculateCurrentRowWidth(elements);
+        };
+
 		/**
 		* @desc adjust the row width
 		*/			
 		_this.adjustRow = function(previousElements, availableWidth){
 			// calculate normal width distribution
 			var elementsCount = previousElements.length;
-			var widthPerElement = availableWidth/elementsCount;
+            var lastMargin = $(previousElements[elementsCount - 1]).css('margin-right') || 0;
+			var widthPerElement = Math.round((availableWidth/elementsCount) * 100) / 100;
 			for(var i = 0; i < previousElements.length; i++){
-				var width = $(previousElements[i]).width() + widthPerElement;
-				$(previousElements[i]).width(width);
-				// adjust image width
+                var width = $(previousElements[i]).width() + widthPerElement;
+                $(previousElements[i]).width(width);
+                // adjust image width
 				var $img = $('img', previousElements[i]).width(width);
+                if(elementsCount == 1){
+                    $(previousElements[i]).css({
+                        'marginLeft' : 'auto',
+                        'marginRight' : 'auto',
+                        'float' : 'none'
+                    });
+                    var fullsize = $img.attr('data-fullsize');
+                    $img.attr('src', fullsize);
+                }
 				// set background for images that does not fit the height
 				if($img.height() < $(previousElements[i]).height()){
 					$(previousElements[i]).css('background-color', $.fn.photogrid.config.noFitThumbsBackground)
@@ -75,19 +105,23 @@
 				if($img.width() < $(previousElements[i]).width()){
 					$(previousElements[i]).css('background-color', $.fn.photogrid.config.noFitThumbsBackground)
 				}				
-			}	
-			// clear margin for the last element
-			$(previousElements[elementsCount - 1]).css('margin-right', 0);
+			}
+
+            if(elementsCount > 1){
+			    // clear margin for the last element
+			    $(previousElements[elementsCount - 1]).css('margin-right', 0);
+            }
 		}
 		
 		/**
 		* @desc adjust the row width
 		*/			
 		_this.assignRandomHover = function($element){
+            if(!$element) return;
 			var colors = $.fn.photogrid.config.hoverColors;
 			if(colors.length == 0) return;
 			var index = random(0, colors.length - 1);
-			$($element).css('background-color', colors[index]);		
+			$($element).css('background-color', colors[index]);
 		};
 		
 		/**
@@ -95,18 +129,21 @@
 		*/			
 		_this.showDetails = function($element){
 			var rowNumber = $($element).attr(key.rowNumber);
-			var imgSrc = $('img', $element).attr('src');
+			var imgSrc = $('img', $element).attr('data-fullsize');
 			var title = $($element).attr('data-title');
 			var description = $($element).attr('data-description');
-	
-			$('.photo-grid-info-image img', _this.domDetails).attr('src', imgSrc);
+	        var url = $($element).attr('data-url');
+
+			$('.photo-grid-info-image', _this.domDetails).css('background', 'url(' + imgSrc + ') no-repeat');
 			$('.photo-grid-info-title', _this.domDetails).text(title);
 			$('.photo-grid-info-description', _this.domDetails).text(description);
-			$('.photo-grid-info-open-image', _this.domDetails).attr('href', imgSrc);
-			
+			$('.photo-grid-info-open-image', _this.domDetails).attr('href', url);
+
 			// show the details
+            var containerWidth = $(_this.domElement).width();
 			var $lastRowElement = $("[" + key.rowNumber + "='" + rowNumber + "']", _this.domElement).last();
-			$(_this.domDetails).detach().insertAfter($lastRowElement);
+            $(_this.domDetails).hide();
+            $(_this.domDetails).detach().insertAfter($lastRowElement);
 			$(_this.domDetails).slideDown();
 			
 			// calculate pointer position
@@ -117,14 +154,19 @@
 			$(_this.domDetailsPointer).css('top', detailsPosition.top - height);
 			$(_this.domDetailsPointer).css('left', elementPosition.left + width/2);			
 		}
-		
+
+        _this.hideDetails = function(){
+            $(_this.domDetails).slideUp();
+            return false;
+        }
+
 		/**
 		* @desc handles image click event
 		*/			
 		_this.onImageClick = function(e){
 			_this.showDetails(this);
 		}
-		
+
 		/**
 		* @desc attach plugin events
 		*/			
@@ -132,7 +174,7 @@
 			// engage with the dom, once the images are ready
 			$(window).on("load." + _this.id, _this.adjustLayout);
 			$(document).on("click", '.photo-grid-image-box',_this.onImageClick);
-			$(_this.domDetails).click(function(){ $(_this.domDetails).slideUp(); });
+			$('.photo-grid-info-close').click(_this.hideDetails);
 		};
 		
 		/**
